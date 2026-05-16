@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Adivina el número</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .card { background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 500px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+        .tag { font-size: 12px; font-weight: 600; color: #6366f1; text-decoration: none; }
+        h1 { font-size: 24px; margin-bottom: 6px; }
+        .subtitulo { font-size: 14px; color: #6b7280; margin-bottom: 20px; }
+        .inicio-wrap { text-align: center; }
+        .pistas-info { color: #374151; font-size: 13px; margin-bottom: 16px; }
+        .contador { margin-bottom: 12px; font-size: 14px; }
+        .barra-wrap { background: #e5e7eb; border-radius: 99px; height: 8px; margin-bottom: 20px; overflow: hidden; }
+        .barra { background: #6366f1; height: 8px; border-radius: 99px; }
+        .pista-gano    { color: #16a34a; }
+        .pista-perdio  { color: #dc2626; }
+        .pista-caliente, .pista-muy_caliente { color: #ea580c; }
+        .pista-tibio   { color: #ca8a04; }
+        .pista-frio    { color: #0ea5e9; }
+        input[type=number] { width: 100%; padding: 10px; font-size: 16px; border: 1.5px solid #d1d5db; border-radius: 8px; outline: none; margin-bottom: 8px; }
+        button { background: #6366f1; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 8px; }
+        .btn-reiniciar { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+        .historial { margin-top: 20px; }
+        .historial h3 { font-size: 14px; color: #6b7280; margin-bottom: 8px; }
+        .historial ul { list-style: none; }
+        .historial li { font-size: 13px; padding: 4px 0; border-bottom: 1px solid #f3f4f6; }
+        .link-calc { display: block; text-align: center; font-size: 13px; color: #6366f1; margin-top: 16px; text-decoration: none; }
+        .error-msg { color: #dc2626; font-size: 13px; margin-bottom: 8px; }
+        .tag { display: inline-block; font-size: 12px; font-weight: 600; color: #6366f1; background: #eef2ff; padding: 2px 10px; border-radius: 99px; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <span class="tag">Spring Boot MVC</span>
+    <h1>🎯 Adivina el número</h1>
+    <p class="subtitulo">Estoy pensando en un número entre <strong>1</strong> y <strong>100</strong>. ¡Tienes 7 intentos!</p>
+
+    <div th:if="${sesion == null}" class="inicio-wrap">
+        <p class="pistas-info">Las pistas de temperatura te guiarán: 🔥 muy caliente, ♨️ caliente, 🌡️ tibio, 🧊 frío.</p>
+        <form th:action="@{/juego/nuevo}" method="get">
+            <button type="submit">▶ Iniciar partida</button>
+        </form>
+    </div>
+
+    <div th:if="${sesion != null}">
+        <div class="contador">
+            Intento <strong th:text="${sesion.intentos}"></strong> de <span th:text="${sesion.maxIntentos}"></span>
+        </div>
+        <div class="barra-wrap">
+            <div class="barra" th:style="'width:' + (${sesion.intentos} * 100 / ${sesion.maxIntentos}) + '%'"></div>
+        </div>
+
+        <div th:if="${pista}">
+            <div th:switch="${pista}">
+                <p th:case="'GANO'"         class="pista-gano">🎉 ¡Correcto! Era el <span th:text="${intento}"></span></p>
+                <p th:case="'PERDIO'"       class="pista-perdio">💀 ¡Perdiste! Era el <span th:text="${sesion.numeroSecreto}"></span></p>
+                <p th:case="'MUY_CALIENTE'" class="pista-caliente">🔥 ¡Muy caliente!</p>
+                <p th:case="'CALIENTE'"     class="pista-caliente">♨️ Caliente.</p>
+                <p th:case="'TIBIO'"        class="pista-tibio">🌡️ Tibio...</p>
+                <p th:case="'FRIO'"         class="pista-frio">🧊 Frío.</p>
+            </div>
+        </div>
+
+        <form th:if="${!sesion.terminado}" th:action="@{/juego/adivinar}" th:object="${form}" method="post">
+            <label>Tu número (1 - 100)</label>
+            <input type="number" min="1" max="100" th:field="*{numero}" placeholder="Ej: 42">
+            <span th:if="${#fields.hasErrors('numero')}" th:errors="*{numero}" class="error-msg"></span>
+            <button type="submit">Adivinar 🎯</button>
+        </form>
+
+        <form th:if="${sesion.terminado}" th:action="@{/juego/nuevo}" method="get">
+            <button type="submit" class="btn-reiniciar">🔄 Jugar de nuevo</button>
+        </form>
+
+        <div th:if="${!#lists.isEmpty(sesion.historialIntentos)}" class="historial">
+            <h3>Historial de intentos</h3>
+            <ul>
+                <li th:each="h : ${sesion.historialIntentos}" th:text="${h}"></li>
+            </ul>
+        </div>
+    </div>
+
+    <a class="link-calc" th:href="@{/calculadora}">← Volver a la calculadora</a>
+</div>
+</body>
+</html>
